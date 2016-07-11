@@ -68,7 +68,7 @@ func (c *CachedNodeInfo) GetNodeInfo(id string) (*api.Node, error) {
 // podMetadata is a type that is passed as metadata for predicate functions
 type predicateMetadata struct {
 	podBestEffort bool
-	podRequest    *resourceRequest
+	podRequest    resourceAmounts
 }
 
 func PredicateMetadata(pod *api.Pod) interface{} {
@@ -78,7 +78,7 @@ func PredicateMetadata(pod *api.Pod) interface{} {
 	}
 	return &predicateMetadata{
 		podBestEffort: isPodBestEffort(pod),
-		podRequest:    getResourceRequest(pod),
+		podRequest:    getResourceAmounts(pod),
 	}
 }
 
@@ -400,64 +400,50 @@ func (c *VolumeZoneChecker) predicate(pod *api.Pod, meta interface{}, nodeInfo *
 	return true, nil
 }
 
-type resourceRequest struct {
-	milliCPU  int64
-	memory    int64
-	nvidiaGPU int64
+type resourceAmounts map[api.ResourceName]int64
+
+func resourceAmountsFromList(rs api.ResourceList) resourceAmounts {
+	result := resourceAmounts{}
+	for rName, rCap := range rs {
+		result[rName] += rCap.MilliValue()
+	}
+	return result
 }
 
-func getResourceRequest(pod *api.Pod) *resourceRequest {
-	result := resourceRequest{}
+func getResourceAmounts(pod *api.Pod) resourceAmounts {
+	result := resourceAmounts{}
 	for _, container := range pod.Spec.Containers {
-		requests := container.Resources.Requests
-		result.memory += requests.Memory().Value()
-		result.milliCPU += requests.Cpu().MilliValue()
-		result.nvidiaGPU += requests.NvidiaGPU().Value()
+		for rName, rCap := range container.Resources.Requests {
+			result[rName] += rCap.MilliValue()
+		}
 	}
 	// take max_resource(sum_pod, any_init_container)
 	for _, container := range pod.Spec.InitContainers {
-		requests := container.Resources.Requests
-		if mem := requests.Memory().Value(); mem > result.memory {
-			result.memory = mem
-		}
-		if cpu := requests.Cpu().MilliValue(); cpu > result.milliCPU {
-			result.milliCPU = cpu
+		for rName, rCap := range container.Resources.Requests {
+			if rCap.MilliValue() > result[rName] {
+				result[rName] = rCap.MilliValue()
+			}
 		}
 	}
-	return &result
+	return result
 }
 
-func CheckPodsExceedingFreeResources(pods []*api.Pod, allocatable api.ResourceList) (fitting []*api.Pod, notFittingCPU, notFittingMemory, notFittingNvidiaGPU []*api.Pod) {
-	totalMilliCPU := allocatable.Cpu().MilliValue()
-	totalMemory := allocatable.Memory().Value()
-	totalNvidiaGPU := allocatable.NvidiaGPU().Value()
-	milliCPURequested := int64(0)
-	memoryRequested := int64(0)
-	nvidiaGPURequested := int64(0)
+func CheckPodsExceedingFreeResources(pods []*api.Pod, allocatable api.ResourceList) (fitting []*api.Pod, notFitting map[api.ResourceName][]*api.Pod) {
+	total := resourceAmountsFromList(allocatable)
+	consumed := resourceAmounts{}
 	for _, pod := range pods {
-		podRequest := getResourceRequest(pod)
-		fitsCPU := (totalMilliCPU - milliCPURequested) >= podRequest.milliCPU
-		fitsMemory := (totalMemory - memoryRequested) >= podRequest.memory
-		fitsNVidiaGPU := (totalNvidiaGPU - nvidiaGPURequested) >= podRequest.nvidiaGPU
-		if !fitsCPU {
-			// the pod doesn't fit due to CPU request
-			notFittingCPU = append(notFittingCPU, pod)
-			continue
+		podAmounts := getResourceAmounts(pod)
+		for rName, amount := range podAmounts {
+			if total[rName]-consumed[rName] >= podAmounts[rName] {
+				notFitting = append(notFitting[rName], pod)
+				continue
+			}
 		}
-		if !fitsMemory {
-			// the pod doesn't fit due to Memory request
-			notFittingMemory = append(notFittingMemory, pod)
-			continue
-		}
-		if !fitsNVidiaGPU {
-			// the pod doesn't fit due to NvidiaGPU request
-			notFittingNvidiaGPU = append(notFittingNvidiaGPU, pod)
-			continue
-		}
+
 		// the pod fits
-		milliCPURequested += podRequest.milliCPU
-		memoryRequested += podRequest.memory
-		nvidiaGPURequested += podRequest.nvidiaGPU
+		for rName, amount := range podAmounts {
+			consumed[rName] += amount
+		}
 		fitting = append(fitting, pod)
 	}
 	return
@@ -478,35 +464,33 @@ func PodFitsResources(pod *api.Pod, meta interface{}, nodeInfo *schedulercache.N
 			newInsufficientResourceError(podCountResourceName, 1, int64(len(nodeInfo.Pods())), int64(allowedPodNumber))
 	}
 
-	var podRequest *resourceRequest
+	var podAmounts resourceAmounts
 	predicateMeta, ok := meta.(*predicateMetadata)
 	if ok {
-		podRequest = predicateMeta.podRequest
+		podAmounts = predicateMeta.podRequest
 	} else {
 		// We couldn't parse metadata - fallback to computing it.
-		podRequest = getResourceRequest(pod)
+		podAmounts = getResourceAmounts(pod)
 	}
-	if podRequest.milliCPU == 0 && podRequest.memory == 0 && podRequest.nvidiaGPU == 0 {
+
+	// Return early if the pod lacks nonzero request dimensions.
+	podTotal := 0
+	for _, amount := range podAmounts {
+		podTotal += amount
+	}
+	if podTotal == 0 {
 		return true, nil
 	}
 
-	allocatable := node.Status.Allocatable
-	totalMilliCPU := allocatable.Cpu().MilliValue()
-	totalMemory := allocatable.Memory().Value()
-	totalNvidiaGPU := allocatable.NvidiaGPU().Value()
+	allocatableAmounts := resourceAmountsFromList(node.Status.Allocatable)
+	requestedAmounts := resourceAmountsFromList(nodeInfo.RequestedResource())
+	for rName, amount := range podAmounts {
+		if allocatableAmounts[rName] < requestedAmounts[rName]+amount {
+			return false,
+				newInsufficientResourceError(rName, amount, requestedAmounts[rName], allocatableAmounts[rName])
+		}
+	}
 
-	if totalMilliCPU < podRequest.milliCPU+nodeInfo.RequestedResource().MilliCPU {
-		return false,
-			newInsufficientResourceError(cpuResourceName, podRequest.milliCPU, nodeInfo.RequestedResource().MilliCPU, totalMilliCPU)
-	}
-	if totalMemory < podRequest.memory+nodeInfo.RequestedResource().Memory {
-		return false,
-			newInsufficientResourceError(memoryResourceName, podRequest.memory, nodeInfo.RequestedResource().Memory, totalMemory)
-	}
-	if totalNvidiaGPU < podRequest.nvidiaGPU+nodeInfo.RequestedResource().NvidiaGPU {
-		return false,
-			newInsufficientResourceError(nvidiaGpuResourceName, podRequest.nvidiaGPU, nodeInfo.RequestedResource().NvidiaGPU, totalNvidiaGPU)
-	}
 	if glog.V(10) {
 		// We explicitly don't do glog.V(10).Infof() to avoid computing all the parameters if this is
 		// not logged. There is visible performance gain from it.
@@ -803,7 +787,6 @@ func GeneralPredicates(pod *api.Pod, meta interface{}, nodeInfo *schedulercache.
 	if !fit {
 		return fit, err
 	}
-
 	fit, err = PodFitsHost(pod, meta, nodeInfo)
 	if !fit {
 		return fit, err

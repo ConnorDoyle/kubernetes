@@ -365,6 +365,8 @@ kube::golang::setup_env() {
 kube::golang::place_bins() {
   local host_platform
   host_platform=$(kube::golang::host_platform)
+  local binpath
+  binpath="${KUBE_GOPATH}/bin"
 
   kube::log::status "Placing binaries"
 
@@ -377,13 +379,15 @@ kube::golang::place_bins() {
       platform_src=""
     fi
 
-    local full_binpath_src="${KUBE_GOPATH}/bin${platform_src}"
+    local full_binpath_src="${binpath}${platform_src}"
     if [[ -d "${full_binpath_src}" ]]; then
       mkdir -p "${KUBE_OUTPUT_BINPATH}/${platform}"
       find "${full_binpath_src}" -maxdepth 1 -type f -exec \
         rsync -pt {} "${KUBE_OUTPUT_BINPATH}/${platform}" \;
     fi
   done
+
+  kube::log::status "Binaries are available in '${binpath}'"
 }
 
 kube::golang::fallback_if_stdlib_not_installable() {

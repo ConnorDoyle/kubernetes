@@ -220,6 +220,7 @@ func NewMainKubelet(
 	maxPods int,
 	podsPerCore int,
 	nvidiaGPUs int,
+	customScalarResources map[string]resource.Quantity,
 	dockerExecHandler dockertools.ExecHandler,
 	resolverConfig string,
 	cpuCFSQuota bool,
@@ -347,6 +348,7 @@ func NewMainKubelet(
 		maxPods:                    maxPods,
 		podsPerCore:                podsPerCore,
 		nvidiaGPUs:                 nvidiaGPUs,
+		customScalarResources:      customScalarResources,
 		syncLoopMonitor:            atomic.Value{},
 		resolverConfig:             resolverConfig,
 		cpuCFSQuota:                cpuCFSQuota,
@@ -731,6 +733,9 @@ type Kubelet struct {
 
 	// Number of NVIDIA GPUs on this node
 	nvidiaGPUs int
+
+	// Custom scalar resources available on this node
+	customScalarResources map[string]resource.Quantity
 
 	// Monitor Kubelet's sync loop
 	syncLoopMonitor atomic.Value
@@ -2762,6 +2767,12 @@ func (kl *Kubelet) setNodeStatusMachineInfo(node *api.Node) {
 		}
 		node.Status.Capacity[api.ResourceNvidiaGPU] = *resource.NewQuantity(
 			int64(kl.nvidiaGPUs), resource.DecimalSI)
+
+		// Add custom resources.
+		for rName, rCap := range kl.customScalarResources {
+			node.Status.Capacity[api.ResourceName(rName)] = rCap
+		}
+
 		if node.Status.NodeInfo.BootID != "" &&
 			node.Status.NodeInfo.BootID != info.BootID {
 			// TODO: This requires a transaction, either both node status is updated

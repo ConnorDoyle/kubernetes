@@ -196,6 +196,11 @@ func UnsecuredKubeletConfig(s *options.KubeletServer) (*KubeletConfig, error) {
 		Thresholds:               thresholds,
 	}
 
+	customScalarResources, err := parseCustomResources(s.CustomScalarResources)
+	if err != nil {
+		return nil, err
+	}
+
 	return &KubeletConfig{
 		Address:                      net.ParseIP(s.Address),
 		AllowPrivileged:              s.AllowPrivileged,
@@ -238,6 +243,7 @@ func UnsecuredKubeletConfig(s *options.KubeletServer) (*KubeletConfig, error) {
 		MaxPerPodContainerCount:      int(s.MaxPerPodContainerCount),
 		MaxPods:                      int(s.MaxPods),
 		NvidiaGPUs:                   int(s.NvidiaGPUs),
+		CustomScalarResources:        customScalarResources,
 		MinimumGCAge:                 s.MinimumGCAge.Duration,
 		Mounter:                      mounter,
 		NetworkPluginName:            s.NetworkPluginName,
@@ -281,6 +287,33 @@ func UnsecuredKubeletConfig(s *options.KubeletServer) (*KubeletConfig, error) {
 		EvictionConfig: evictionConfig,
 		PodsPerCore:    int(s.PodsPerCore),
 	}, nil
+}
+
+// parseCustomResources returns a map of resource names to resource quantities
+// given a config-representation of a custom resource list.
+//
+// Valid values look like: apples:5Ki,bananas:1e6
+func parseCustomResources(value string) (map[string]resource.Quantity, error) {
+	customResources := map[string]resource.Quantity{}
+
+	// split list of pairs by commas
+	resourcePairs := strings.Split(value, ",")
+
+	for _, pair := range resourcePairs {
+		// Split into  name and quantity strings
+		parts := strings.Split(pair, ":")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("failed to parse configured custom resources: \"%s\"", value)
+		}
+		name := parts[0]
+		quantity, err := resource.ParseQuantity(parts[1])
+		if err != nil {
+			return nil, err
+		}
+		customResources[name] = quantity
+	}
+
+	return customResources, nil
 }
 
 // Run runs the specified KubeletServer for the given KubeletConfig.  This should never exit.
@@ -589,6 +622,7 @@ func SimpleKubelet(client *clientset.Clientset,
 		MaxPerPodContainerCount:   2,
 		MaxPods:                   maxPods,
 		NvidiaGPUs:                0,
+		CustomScalarResources:     map[string]resource.Quantity{},
 		MinimumGCAge:              minimumGCAge,
 		Mounter:                   mount.New(),
 		NodeStatusUpdateFrequency: nodeStatusUpdateFrequency,
@@ -824,6 +858,7 @@ type KubeletConfig struct {
 	NodeStatusUpdateFrequency      time.Duration
 	NonMasqueradeCIDR              string
 	NvidiaGPUs                     int
+	CustomScalarResources          map[string]resource.Quantity
 	OOMAdjuster                    *oom.OOMAdjuster
 	OSInterface                    kubecontainer.OSInterface
 	PodCIDR                        string
@@ -941,6 +976,7 @@ func CreateAndInitKubelet(kc *KubeletConfig) (k KubeletBootstrap, pc *config.Pod
 		kc.MaxPods,
 		kc.PodsPerCore,
 		kc.NvidiaGPUs,
+		kc.CustomScalarResources,
 		kc.DockerExecHandler,
 		kc.ResolverConfig,
 		kc.CPUCFSQuota,

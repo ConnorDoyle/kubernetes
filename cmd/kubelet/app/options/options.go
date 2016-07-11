@@ -114,6 +114,7 @@ func NewKubeletServer() *KubeletServer {
 			MaxOpenFiles:                 1000000,
 			MaxPods:                      110,
 			NvidiaGPUs:                   0,
+			CustomScalarResources:        "",
 			MinimumGCAge:                 unversioned.Duration{Duration: 0},
 			NetworkPluginDir:             "/usr/libexec/kubernetes/kubelet-plugins/net/exec/",
 			NetworkPluginName:            "",
@@ -248,6 +249,7 @@ func (s *KubeletServer) AddFlags(fs *pflag.FlagSet) {
 	fs.MarkDeprecated("babysit-daemons", "Will be removed in a future version.")
 	fs.Int32Var(&s.MaxPods, "max-pods", s.MaxPods, "Number of Pods that can run on this Kubelet.")
 	fs.Int32Var(&s.NvidiaGPUs, "experimental-nvidia-gpus", s.NvidiaGPUs, "Number of NVIDIA GPU devices on this node. Only 0 (default) and 1 are currently supported.")
+	fs.StringVar(&s.CustomScalarResources, "custom-scalar-resources", s.CustomScalarResources, "List of custom resource types and quantities for this node to advertise as part of its capacity. The resource list is a comma-separated list of name:quantity pairs. For example: --custom-scalar-resources=bananas:10,apples:100Mi")
 	fs.StringVar(&s.DockerExecHandlerName, "docker-exec-handler", s.DockerExecHandlerName, "Handler to use when executing a command in a container. Valid values are 'native' and 'nsenter'. Defaults to 'native'.")
 	fs.StringVar(&s.NonMasqueradeCIDR, "non-masquerade-cidr", s.NonMasqueradeCIDR, "Traffic to IPs outside this range will use IP masquerade.")
 	fs.StringVar(&s.PodCIDR, "pod-cidr", "", "The CIDR to use for pod IP addresses, only used in standalone mode.  In cluster mode, this is obtained from the master.")
