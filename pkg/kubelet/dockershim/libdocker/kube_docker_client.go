@@ -174,7 +174,7 @@ func (d *kubeDockerClient) RemoveContainer(id string, opts dockertypes.Container
 func (d *kubeDockerClient) UpdateContainerResources(id string, updateConfig dockercontainer.UpdateConfig) error {
 	ctx, cancel := d.getTimeoutContext()
 	defer cancel()
-	err := d.client.ContainerUpdate(ctx, id, updateConfig)
+	_, err := d.client.ContainerUpdate(ctx, id, updateConfig)
 	if ctxErr := contextError(ctx); ctxErr != nil {
 		return ctxErr
 	}
