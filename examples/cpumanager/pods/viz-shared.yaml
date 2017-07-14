@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cpuset-visualizer-shared
+spec:
+  containers:
+  - image: quay.io/connordoyle/cpuset-visualizer
+    name: cpuset-visualizer-shared
+    resources:
+      requests:
+        cpu: 1
