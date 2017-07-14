@@ -27,6 +27,20 @@ import (
 	"k8s.io/kubernetes/pkg/api/helper"
 )
 
+// IsExtendedResourceName returns true if the resource name is not in the
+// default namespace, or it has the opaque integer resource prefix.
+func IsExtendedResourceName(name v1.ResourceName) bool {
+	return IsCustomNamespacedResourceName(name) || IsOpaqueIntResourceName(name)
+}
+
+// Returns true if the resource name is not in the *kubernetes.io/ namespace.
+// Note: partially-qualified (unprefixed) names are assumed by default to be
+//       in the kubernetes.io/ namespace.
+func IsCustomNamespacedResourceName(name v1.ResourceName) bool {
+	return strings.Contains(string(name), "/") &&
+		!strings.Contains(string(name), v1.ResourceDefaultNamespacePrefix)
+}
+
 // IsOpaqueIntResourceName returns true if the resource name has the opaque
 // integer resource prefix.
 func IsOpaqueIntResourceName(name v1.ResourceName) bool {
