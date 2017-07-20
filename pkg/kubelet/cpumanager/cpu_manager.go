@@ -42,8 +42,6 @@ type PolicyName string
 type Manager interface {
 	Start()
 
-	Policy() Policy
-
 	// RegisterContainer registers a container with the cpuset manager
 	// resulting in synchronous setting on the container cpuset.  This
 	// is called after RegisterContainer(), which creates the containerID, and
@@ -115,10 +113,6 @@ func (m *manager) Start() {
 		return
 	}
 	go wait.Until(m.reconcileState, time.Second, wait.NeverStop)
-}
-
-func (m *manager) Policy() Policy {
-	return m.policy
 }
 
 func (m *manager) RegisterContainer(p *v1.Pod, c *v1.Container, containerID string) error {
