@@ -59,30 +59,30 @@ type Manager interface {
 	State() state.Reader
 }
 
-func NewManager(policyType string, cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
-	var newPolicy Policy
+func NewManager(policyName PolicyName, cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
+	var policy Policy
 
-	switch PolicyName(policyType) {
+	switch policyName {
 	case PolicyNoop:
-		newPolicy = NewNoopPolicy()
+		policy = NewNoopPolicy()
 	case PolicyStatic:
-		machinInfo, err := kletGetter.GetCachedMachineInfo()
+		machineInfo, err := kletGetter.GetCachedMachineInfo()
 		if err != nil {
 			return nil, err
 		}
-		topo, err := topology.Discover(machinInfo)
+		topo, err := topology.Discover(machineInfo)
 		if err != nil {
 			return nil, err
 		}
 		glog.Infof("[cpumanager] detected CPU topology: %v", topo)
-		newPolicy = NewStaticPolicy(topo)
+		policy = NewStaticPolicy(topo)
 	default:
-		glog.Warningf("[cpumanager] Invalid policy, fallback to default policy - 'noop'")
-		newPolicy = NewNoopPolicy()
+		glog.Warningf("[cpumanager] Unknown policy (\"%s\"), falling back to \"%s\" policy (\"%s\")", policyName, PolicyNoop)
+		policy = NewNoopPolicy()
 	}
 
 	return &manager{
-		policy:            newPolicy,
+		policy:            policy,
 		state:             state.NewMemoryState(),
 		containerRuntime:  cr,
 		kletGetter:        kletGetter,

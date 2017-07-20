@@ -618,7 +618,7 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Dep
 		}
 
 		klet.cpuManager, err = cpumanager.NewManager(
-			kubeCfg.CPUManagerPolicy,
+			cpumanager.PolicyName(kubeCfg.CPUManagerPolicy),
 			runtimeService, // runtime service
 			klet,           // kubelet getter interface
 			klet.statusManager)
@@ -1258,7 +1258,7 @@ func (kl *Kubelet) initializeModules() error {
 	// Start resource analyzer
 	kl.resourceAnalyzer.Start()
 
-	// Step 9: Start the CPU manager
+	// Start the CPU manager
 	kl.cpuManager.Start()
 
 	return nil

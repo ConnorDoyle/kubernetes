@@ -779,7 +779,7 @@ message UpdateContainerResourcesRequest {
     // ID of the container to update.
     string container_id = 1;
     // Resource configuration specific to Linux containers.
-    LinuxContainerResources linux = 15;
+    LinuxContainerResources linux = 2;
 }
 
 message UpdateContainerResourcesResponse {}

@@ -88,17 +88,10 @@ func (p *staticPolicy) allocateCPUs(s state.State, numCPUs int) (cpuset.CPUSet, 
 	if numCPUs > s.GetDefaultCPUSet().Size() {
 		return cpuset.NewCPUSet(), fmt.Errorf("not enough cpus available to satisfy request")
 	}
-
-	// TODO(CD): Acquire CPUs topologically instead of sequentially...
-	sharedCPUs := s.GetDefaultCPUSet().AsSlice()
-	resultCPUs := sharedCPUs[0:numCPUs]
-	result := cpuset.NewCPUSet(resultCPUs...)
-
 	result, err := takeByTopology(p.topology, s.GetDefaultCPUSet(), numCPUs)
 	if err != nil {
 		return nil, err
 	}
-
 	// Remove allocated CPUs from the shared CPUSet.
 	s.SetDefaultCPUSet(s.GetDefaultCPUSet().Difference(result))
 
@@ -112,13 +105,16 @@ func takeByTopology(topo *topology.CPUTopology, availableCPUs cpuset.CPUSet, num
 	}
 
 	// Algorithm: topology-aware best-fit
-
+	result := cpuset.NewCPUSet()
 	CPUsPerCore := topo.NumCPUs / topo.NumCores
 	CPUsPerSocket := topo.NumCPUs / topo.NumSockets
-
-	result := cpuset.NewCPUSet()
 	topoDetails := topo.CPUtopoDetails.KeepOnly(availableCPUs)
 
+	// Auxilliary closure to update intermediate results:
+	// - Adds cpus to result
+	// - Recalculates availableCPUs
+	// - Prunes topoDetails
+	// - decrements numCPUs
 	take := func(cpus cpuset.CPUSet) {
 		result = result.Union(cpus)
 		availableCPUs = availableCPUs.Difference(result)
@@ -126,10 +122,14 @@ func takeByTopology(topo *topology.CPUTopology, availableCPUs cpuset.CPUSet, num
 		numCPUs -= cpus.Size()
 	}
 
+	// Returns true if the supplied socket is fully available in
+	// `topoDetails`.
 	isFullSocket := func(socketID int) bool {
 		return topoDetails.CPUsInSocket(socketID).Size() == CPUsPerSocket
 	}
 
+	// Returns true if the supplied core is fully available in
+	// `topoDetails`.
 	isFullCore := func(coreID int) bool {
 		return topoDetails.CPUsInCore(coreID).Size() == CPUsPerCore
 	}
