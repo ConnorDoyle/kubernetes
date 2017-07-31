@@ -179,6 +179,9 @@ func defaultPredicates() sets.String {
 		factory.RegisterFitPredicate("CheckNodeCondition", predicates.CheckNodeConditionPredicate),
 		factory.RegisterMandatoryFitPredicate("CheckNodeCondition", predicates.CheckNodeConditionPredicate),
 
+		// Fit is determined by node CPU pressure condition.
+		factory.RegisterFitPredicate("CheckNodeCPUPressure", predicates.CheckNodeCPUPressurePredicate),
+
 		// Fit is determined by volume zone requirements.
 		factory.RegisterFitPredicateFactory(
 			"NoVolumeNodeConflict",

@@ -42,6 +42,7 @@ var (
 	ErrNodeNetworkUnavailable    = newPredicateFailureError("NodeNetworkUnavailable")
 	ErrNodeUnschedulable         = newPredicateFailureError("NodeUnschedulable")
 	ErrNodeUnknownCondition      = newPredicateFailureError("NodeUnknownCondition")
+	ErrNodeUnderCPUPressure      = newPredicateFailureError("NodeUnderCPUPressure")
 	ErrVolumeNodeConflict        = newPredicateFailureError("NoVolumeNodeConflict")
 	// ErrFakePredicate is used for test only. The fake predicates returning false also returns error
 	// as ErrFakePredicate.
