@@ -25,6 +25,7 @@ filegroup(
     name = "all-srcs",
     srcs = [
         ":package-srcs",
+        "//pkg/kubelet/apis/cpumanager/v1alpha:all-srcs",
         "//pkg/kubelet/apis/cri:all-srcs",
         "//pkg/kubelet/apis/deviceplugin/v1alpha:all-srcs",
         "//pkg/kubelet/apis/kubeletconfig:all-srcs",

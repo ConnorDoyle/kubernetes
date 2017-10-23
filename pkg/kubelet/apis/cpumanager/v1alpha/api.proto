@@ -1,0 +1,106 @@
+// To regenerate api.pb.go run hack/update-device-plugin.sh
+syntax = 'proto3';
+
+package cpumanager;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.stringer_all) =  true;
+option (gogoproto.goproto_getters_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_unrecognized_all) = false;
+
+
+// State is the remote interface to the Kubelet's CPU manager state, which
+// records mappings of container IDs to assigned CPU sets.
+//
+// See pkg/kubelet/cm/cpumanager/state
+service State {
+  rpc GetCPUSet(GetCPUSetRequest) returns (GetCPUSetResponse) {}
+  rpc GetDefaultCPUSet(Empty) returns (GetDefaultCPUSetResponse) {}
+  rpc GetCPUSetOrDefault(GetCPUSetOrDefaultRequest) returns (GetCPUSetOrDefaultResponse) {}
+  rpc SetCPUSet(SetCPUSetRequest) returns (SetCPUSetResponse) {}
+  rpc SetDefaultCPUSet(SetDefaultCPUSetRequest) returns (SetDefaultCPUSetResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+}
+
+message Empty {}
+
+message GetCPUSetRequest {
+  string container_id = 1;
+}
+
+message GetCPUSetResponse {
+  string cpuset = 1;
+}
+
+message GetDefaultCPUSetResponse {
+  string cpuset = 1;
+}
+
+message GetCPUSetOrDefaultRequest {
+  string container_id = 1;
+}
+
+message GetCPUSetOrDefaultResponse {
+  string cpuset = 1;
+}
+
+message SetCPUSetOrDefaultResponse {
+  string cpuset = 1;
+}
+
+message SetCPUSetRequest {
+  string container_id = 1;
+  string cpuset = 2;
+}
+
+message SetCPUSetResponse {}
+
+message SetDefaultCPUSetRequest {
+  string cpuset = 1;
+}
+
+message SetDefaultCPUSetResponse {}
+
+message DeleteRequest {
+  string container_id = 1;
+}
+
+message DeleteResponse {}
+
+service Policy {
+  rpc Name(NameRequest) returns (NameResponse) {}
+  rpc Start(StartRequest) returns (Empty) {}
+  rpc AddContainer(AddContainerRequest) returns (AddContainerResponse) {}
+  rpc RemoveContainer(RemoveContainerRequest) returns (RemoveContainerResponse) {}
+}
+
+message NameRequest {}
+
+message NameResponse {
+  string name = 1;
+}
+
+message StartRequest {}
+
+message AddContainerRequest {
+  string pod_json = 1;
+  string container_name = 2;
+  string container_id = 3;
+}
+
+message AddContainerResponse {
+  string error = 1;
+}
+
+message RemoveContainerRequest {
+  string container_id = 1;
+}
+
+message RemoveContainerResponse {
+  string error = 1;
+}
