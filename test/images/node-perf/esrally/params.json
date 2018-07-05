@@ -1,0 +1,6 @@
+{
+  "additional_jvm_settings": [
+    "-Xms2g",
+    "-Xmx2g"
+  ]
+}
