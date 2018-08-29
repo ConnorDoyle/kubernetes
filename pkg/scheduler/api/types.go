@@ -114,6 +114,14 @@ type PriorityArgument struct {
 	LabelPreference *LabelPreference
 	// The RequestedToCapacityRatio priority function is parametrized with function shape.
 	RequestedToCapacityRatioArguments *RequestedToCapacityRatioArguments
+	// It uses a scarce resource name to identify the scarce resource
+	ScarceResourceBinPacking *ScarceResourceBinPacking
+}
+
+// ScarceResourceBinPacking holds the scarce resources that are used to configure the corresponding priority function
+type ScarceResourceBinPacking struct {
+	// Used to identify node "groups"
+	ScarceResource string
 }
 
 // ServiceAffinity holds the parameters that are used to configure the corresponding predicate in scheduler policy configuration.

@@ -331,6 +331,13 @@ func RegisterCustomPriorityFunction(policy schedulerapi.PriorityPolicy) string {
 				},
 				Weight: policy.Weight,
 			}
+		} else if policy.Argument.ScarceResourceBinPacking != nil {
+			pcf = &PriorityConfigFactory{
+				MapReduceFunction: func(args PluginFactoryArgs) (algorithm.PriorityMapFunction, algorithm.PriorityReduceFunction) {
+					return priorities.NewScarceResourceBinPacking(policy.Argument.ScarceResourceBinPacking.ScarceResource)
+				},
+				Weight: policy.Weight,
+			}
 		}
 	} else if existingPcf, ok := priorityFunctionMap[policy.Name]; ok {
 		glog.V(2).Infof("Priority type %s already registered, reusing.", policy.Name)
