@@ -38,6 +38,17 @@ func NewScarceResourceBinPacking(scarceResource string) (algorithm.PriorityMapFu
 	return scarceResourceBinPackingPrioritizer.ScarceResourceBinPackingPriorityMap, nil
 }
 
+// ScarceResourceBinPackingPriorityDefault creates a requestedToCapacity based
+// ResourceAllocationPriority using default resource scoring function shape.
+// The default function assigns 1.0 to resource when all capacity is available
+// and 0.0 when requested amount is equal to capacity.
+func ScarceResourceBinPackingPriorityDefault() *ScarceResourceBinPacking {
+	defaultscarceResourceBinPackingPrioritizer := &ScarceResourceBinPacking{
+		scarceResource: "",
+	}
+	return defaultscarceResourceBinPackingPrioritizer
+}
+
 // ScarceResourceBinPackingPriorityMap is a priority function that favors nodes that have higher utlization of scare resource.
 // It will detect whether the requested scarce resource is present on a node, and then calculate a score ranging from 0 to 10
 // based total utlization (best fit)
@@ -46,6 +57,9 @@ func NewScarceResourceBinPacking(scarceResource string) (algorithm.PriorityMapFu
 func (s *ScarceResourceBinPacking) ScarceResourceBinPackingPriorityMap(pod *v1.Pod, meta interface{}, nodeInfo *schedulercache.NodeInfo) (schedulerapi.HostPriority, error) {
 	var score int
 	node := nodeInfo.Node()
+	if len(s.scarceResource) == 0 {
+		return schedulerapi.HostPriority{}, fmt.Errorf("scarceResource not defined")
+	}
 	if node == nil {
 		return schedulerapi.HostPriority{}, fmt.Errorf("node not found")
 	}

@@ -515,6 +515,7 @@ func validatePredicateOrDie(predicate schedulerapi.PredicatePolicy) {
 }
 
 func validatePriorityOrDie(priority schedulerapi.PriorityPolicy) {
+	glog.Infof("Inside validate")
 	if priority.Argument != nil {
 		numArgs := 0
 		if priority.Argument.ServiceAntiAffinity != nil {
@@ -530,7 +531,7 @@ func validatePriorityOrDie(priority schedulerapi.PriorityPolicy) {
 			numArgs++
 		}
 		if numArgs != 1 {
-			glog.Fatalf("Exactly 1 priority argument is required, numArgs: %v, Priority: %s", numArgs, priority.Name)
+			glog.Fatalf("Exactly 100000 priority argument is required, numArgs: %v, Priority: %s", numArgs, priority.Name)
 		}
 	}
 }
