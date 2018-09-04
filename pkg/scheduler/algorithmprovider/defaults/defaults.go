@@ -101,6 +101,9 @@ func init() {
 		priorities.RequestedToCapacityRatioResourceAllocationPriorityDefault().PriorityMap,
 		nil,
 		1)
+
+	factory.RegisterPriorityFunction2(
+		"ScarceResourceBinPackingPriority", priorities.ScarceResourceBinPackingPriorityDefault().ScarceResourceBinPackingPriorityMap, nil, 1)
 }
 
 func defaultPredicates() sets.String {

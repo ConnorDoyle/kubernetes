@@ -22,6 +22,7 @@ go_library(
         "requested_to_capacity_ratio.go",
         "resource_allocation.go",
         "resource_limits.go",
+        "scarce_resource_bin_packing.go"
         "selector_spreading.go",
         "taint_toleration.go",
         "test_util.go",
