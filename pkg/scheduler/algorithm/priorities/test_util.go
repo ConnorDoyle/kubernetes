@@ -59,3 +59,21 @@ func priorityFunction(mapFn algorithm.PriorityMapFunction, reduceFn algorithm.Pr
 		return result, nil
 	}
 }
+
+func makeNodeScarceResource(node string, milliCPU, memory int64, scarceResourceName string, scarceResourceVal int64) *v1.Node {
+	return &v1.Node{
+		ObjectMeta: metav1.ObjectMeta{Name: node},
+		Status: v1.NodeStatus{
+			Capacity: v1.ResourceList{
+				v1.ResourceCPU:                      *resource.NewMilliQuantity(milliCPU, resource.DecimalSI),
+				v1.ResourceMemory:                   *resource.NewQuantity(memory, resource.BinarySI),
+				v1.ResourceName(scarceResourceName): *resource.NewQuantity(scarceResourceVal, resource.DecimalSI),
+			},
+			Allocatable: v1.ResourceList{
+				v1.ResourceCPU:                      *resource.NewMilliQuantity(milliCPU, resource.DecimalSI),
+				v1.ResourceMemory:                   *resource.NewQuantity(memory, resource.BinarySI),
+				v1.ResourceName(scarceResourceName): *resource.NewQuantity(scarceResourceVal, resource.DecimalSI),
+			},
+		},
+	}
+}
