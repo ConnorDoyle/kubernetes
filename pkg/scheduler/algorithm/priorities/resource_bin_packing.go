@@ -19,6 +19,7 @@ package priorities
 import (
 	"fmt"
 
+	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/algorithm"
 	schedulerapi "k8s.io/kubernetes/pkg/scheduler/api"
@@ -67,6 +68,12 @@ func (r *ResourceBinPacking) ResourceBinPackingPriorityMap(pod *v1.Pod, meta int
 		score = 0
 	} else {
 		score = int(calculateScareResourceScore(nodeInfo, pod, r.resource))
+	}
+
+	if glog.V(10) {
+		glog.Infof(
+			"%v -> %v: ResourceBinPackingPriority, Score: (%d)", pod.Name, node.Name, score,
+		)
 	}
 
 	return schedulerapi.HostPriority{
