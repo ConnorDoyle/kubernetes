@@ -19,7 +19,7 @@ package api
 import (
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	restclient "k8s.io/client-go/rest"
@@ -114,14 +114,14 @@ type PriorityArgument struct {
 	LabelPreference *LabelPreference
 	// The RequestedToCapacityRatio priority function is parametrized with function shape.
 	RequestedToCapacityRatioArguments *RequestedToCapacityRatioArguments
-	// It uses a scarce resource name to identify the scarce resource
-	ScarceResourceBinPacking *ScarceResourceBinPacking
+	// It uses a  resource name to identify the scarce resource
+	ResourceBinPacking *ResourceBinPacking
 }
 
-// ScarceResourceBinPacking holds the scarce resources that are used to configure the corresponding priority function
-type ScarceResourceBinPacking struct {
-	// Used to identify node "groups"
-	ScarceResource string
+// ResourceBinPacking holds the resources that are used to configure the corresponding priority function
+type ResourceBinPacking struct {
+	// Used to identify resources to bin pack
+	Resource v1.ResourceName
 }
 
 // ServiceAffinity holds the parameters that are used to configure the corresponding predicate in scheduler policy configuration.

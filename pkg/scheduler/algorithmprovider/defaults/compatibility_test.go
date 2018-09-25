@@ -987,11 +987,11 @@ func TestCompatibility_v1_Scheduler(t *testing.T) {
 			}
 		},
 		{
-			"name": "ScarceResourceBinPackingPriority",
+			"name": "ResourceBinPackingPriority",
 			"weight": 2,
 			"argument": {
-				"scarceResourceBinPacking": {
-					"scarceResource": "intel.com/foo"
+				"resourceBinPacking": {
+					"resource": "intel.com/foo"
 				}
 			}
 		}
@@ -1055,11 +1055,11 @@ func TestCompatibility_v1_Scheduler(t *testing.T) {
 						},
 					},
 					{
-						Name:   "ScarceResourceBinPackingPriority",
+						Name:   "ResourceBinPackingPriority",
 						Weight: 2,
 						Argument: &schedulerapi.PriorityArgument{
-							ScarceResourceBinPacking: &schedulerapi.ScarceResourceBinPacking{
-								ScarceResource: "intel.com/foo",
+							ResourceBinPacking: &schedulerapi.ResourceBinPacking{
+								Resource: "intel.com/foo",
 							},
 						},
 					},

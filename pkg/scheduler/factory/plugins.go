@@ -331,10 +331,10 @@ func RegisterCustomPriorityFunction(policy schedulerapi.PriorityPolicy) string {
 				},
 				Weight: policy.Weight,
 			}
-		} else if policy.Argument.ScarceResourceBinPacking != nil {
+		} else if policy.Argument.ResourceBinPacking != nil {
 			pcf = &PriorityConfigFactory{
 				MapReduceFunction: func(args PluginFactoryArgs) (algorithm.PriorityMapFunction, algorithm.PriorityReduceFunction) {
-					return priorities.NewScarceResourceBinPacking(policy.Argument.ScarceResourceBinPacking.ScarceResource)
+					return priorities.NewResourceBinPacking(policy.Argument.ResourceBinPacking.Resource)
 				},
 				Weight: policy.Weight,
 			}
@@ -526,7 +526,7 @@ func validatePriorityOrDie(priority schedulerapi.PriorityPolicy) {
 		if priority.Argument.RequestedToCapacityRatioArguments != nil {
 			numArgs++
 		}
-		if priority.Argument.ScarceResourceBinPacking != nil {
+		if priority.Argument.ResourceBinPacking != nil {
 			numArgs++
 		}
 		if numArgs != 1 {

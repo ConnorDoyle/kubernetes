@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@ import (
 	schedulercache "k8s.io/kubernetes/pkg/scheduler/cache"
 )
 
-func TestScarceResourceBinPacking(t *testing.T) {
+func TestResourceBinPacking(t *testing.T) {
 	scarceResource := "intel.com/foo"
 	noResources := v1.PodSpec{
 		Containers: []v1.Container{},
 	}
-	scareResourcePod1 := v1.PodSpec{
+	scarceResourcePod1 := v1.PodSpec{
 		Containers: []v1.Container{
 			{
 				Resources: v1.ResourceRequirements{
@@ -42,7 +42,7 @@ func TestScarceResourceBinPacking(t *testing.T) {
 			},
 		},
 	}
-	scareResourcePod2 := v1.PodSpec{
+	scarceResourcePod2 := v1.PodSpec{
 		Containers: []v1.Container{
 			{
 				Resources: v1.ResourceRequirements{
@@ -53,7 +53,7 @@ func TestScarceResourceBinPacking(t *testing.T) {
 			},
 		},
 	}
-	machine2Pod := scareResourcePod1
+	machine2Pod := scarceResourcePod1
 	machine2Pod.NodeName = "machine2"
 	tests := []struct {
 		pod          *v1.Pod
@@ -88,7 +88,7 @@ func TestScarceResourceBinPacking(t *testing.T) {
 				used + requested / available
 				Node2 Score: { (0 + 2) / 4 } * 10 = 5
 			*/
-			pod:          &v1.Pod{Spec: scareResourcePod1},
+			pod:          &v1.Pod{Spec: scarceResourcePod1},
 			nodes:        []*v1.Node{makeNodeScarceResource("machine1", 4000, 10000, scarceResource, 8), makeNodeScarceResource("machine2", 4000, 10000, scarceResource, 4)},
 			expectedList: []schedulerapi.HostPriority{{Host: "machine1", Score: 2}, {Host: "machine2", Score: 5}},
 			name:         "resources requested, pods scheduled with less resources",
@@ -107,7 +107,7 @@ func TestScarceResourceBinPacking(t *testing.T) {
 				used + requested / available
 				Node2 Score: { (2 + 2) / 4 } * 10 = 10
 			*/
-			pod:          &v1.Pod{Spec: scareResourcePod1},
+			pod:          &v1.Pod{Spec: scarceResourcePod1},
 			nodes:        []*v1.Node{makeNodeScarceResource("machine1", 4000, 10000, scarceResource, 8), makeNodeScarceResource("machine2", 4000, 10000, scarceResource, 4)},
 			expectedList: []schedulerapi.HostPriority{{Host: "machine1", Score: 2}, {Host: "machine2", Score: 10}},
 			name:         "resources requested, pods scheduled with resources, on node with existing pod running ",
@@ -126,7 +126,7 @@ func TestScarceResourceBinPacking(t *testing.T) {
 				used + requested / available
 				Node2 Score: { (0 + 4) / 4 } * 10 = 10
 			*/
-			pod:          &v1.Pod{Spec: scareResourcePod2},
+			pod:          &v1.Pod{Spec: scarceResourcePod2},
 			nodes:        []*v1.Node{makeNodeScarceResource("machine1", 4000, 10000, scarceResource, 8), makeNodeScarceResource("machine2", 4000, 10000, scarceResource, 4)},
 			expectedList: []schedulerapi.HostPriority{{Host: "machine1", Score: 5}, {Host: "machine2", Score: 10}},
 			name:         "resources requested, pods scheduled with more resources",
@@ -139,7 +139,7 @@ func TestScarceResourceBinPacking(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			nodeNameToInfo := schedulercache.CreateNodeNameToInfoMap(test.pods, test.nodes)
-			prior, _ := NewScarceResourceBinPacking(scarceResource)
+			prior, _ := NewResourceBinPacking(v1.ResourceName(scarceResource))
 			list, err := priorityFunction(prior, nil, nil)(test.pod, nodeNameToInfo, test.nodes)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)

@@ -94,8 +94,8 @@ type PriorityArgument struct {
 	LabelPreference *LabelPreference `json:"labelPreference"`
 	// The RequestedToCapacityRatio priority function is parametrized with function shape.
 	RequestedToCapacityRatioArguments *RequestedToCapacityRatioArguments `json:"requestedToCapacityRatioArguments"`
-	// It uses a scarce resource name to identify the scarce resource
-	ScarceResourceBinPacking *ScarceResourceBinPacking `json:"scarceResourceBinPacking"`
+	// It uses a  resource name to identify the scarce resource to binpack
+	ResourceBinPacking *ResourceBinPacking `json:"resourceBinPacking"`
 }
 
 // ServiceAffinity holds the parameters that are used to configure the corresponding predicate in scheduler policy configuration.
@@ -120,10 +120,10 @@ type ServiceAntiAffinity struct {
 	Label string `json:"label"`
 }
 
-// ScarceResourceBinPacking holds the scarce resources that are used to configure the corresponding priority function
-type ScarceResourceBinPacking struct {
+// ResourceBinPacking holds the resources that are used to configure the corresponding priority function
+type ResourceBinPacking struct {
 	// Used to identify node "groups"
-	ScarceResource string `json:"scarceResource"`
+	Resource apiv1.ResourceName `json:"resource"`
 }
 
 // LabelPreference holds the parameters that are used to configure the corresponding priority function

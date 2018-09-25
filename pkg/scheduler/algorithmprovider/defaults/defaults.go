@@ -103,7 +103,7 @@ func init() {
 		1)
 
 	factory.RegisterPriorityFunction2(
-		"ScarceResourceBinPackingPriority", priorities.ScarceResourceBinPackingPriorityDefault().ScarceResourceBinPackingPriorityMap, nil, 1)
+		"ResourceBinPackingPriority", priorities.ResourceBinPackingPriorityDefault().ResourceBinPackingPriorityMap, nil, 1)
 }
 
 func defaultPredicates() sets.String {
